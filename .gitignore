@@ -1,0 +1,30 @@
+# Local credentials and deployment settings
+/admin/config.ini
+/.env
+/.env.*
+!.env.example
+
+# OTP delivery logs and generated exports
+/sms_outbox.log
+/*.csv
+/admin/*.csv
+
+# Uploaded voter/candidate photos; retain only the generic fallback avatar
+/images/*
+!/images/profile.jpg
+
+# Legacy setup notes include a default admin password
+/readme.txt
+/tcpdf/
+/bower_components/
+/plugins/
+/bower_components/ckeditor/
+/bower_components/Ionicons/
+/bower_components/jvectormap/
+
+# Local editor and operating-system files
+/.vscode/
+/.idea/
+/.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,42 @@
+# ==============================================================================
+# Security & Access Control Configuration - Voting System
+# ==============================================================================
+
+# Disable directory browsing
+Options -Indexes
+
+# Prevent access to sensitive configuration, database and environment files
+<FilesMatch "\.(ini|sql|log|env|git.*|sh|bak|md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Protect internal architecture directories from direct HTTP execution
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^includes/ - [F,L]
+    RewriteRule ^db/ - [F,L]
+</IfModule>
+
+# Security Headers & PWA Support
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Allow Service Worker to control the whole /votingsystem/ scope
+    <Files "sw.js">
+        Header set Service-Worker-Allowed "/votingsystem/"
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </Files>
+
+    <Files "manifest.json">
+        Header set Content-Type "application/manifest+json"
+    </Files>
+</IfModule>

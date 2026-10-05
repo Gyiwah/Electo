@@ -1,0 +1,75 @@
+{
+  "id": "/votingsystem/",
+  "name": "Electo - Voting System",
+  "short_name": "Electo",
+  "description": "Electo - Secure, tamper-evident digital voting platform with secret ballot verification by GAF Tech",
+  "start_url": "index.php",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a8a",
+  "categories": ["utilities", "productivity", "government"],
+  "icons": [
+    {
+      "src": "favicon/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "favicon/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cast Ballot",
+      "short_name": "Vote",
+      "description": "Sign in to vote in the active election",
+      "url": "index.php?role=voter",
+      "icons": [{ "src": "favicon/android-chrome-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Live Results Projector",
+      "short_name": "Live",
+      "description": "View live projected election results",
+      "url": "projector.php",
+      "icons": [{ "src": "favicon/android-chrome-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Admin Portal",
+      "short_name": "Admin",
+      "description": "Election administration and audit logs",
+      "url": "index.php?role=admin",
+      "icons": [{ "src": "favicon/android-chrome-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}
