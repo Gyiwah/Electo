@@ -12,13 +12,6 @@ if(isset($_POST['add'])){
     $status = $_POST['status'] ?? 'draft';
     $start_time = !empty($_POST['start_time']) ? date('Y-m-d H:i:s', strtotime($_POST['start_time'])) : null;
     $end_time = !empty($_POST['end_time']) ? date('Y-m-d H:i:s', strtotime($_POST['end_time'])) : null;
-    $signatory_names = [];
-    $signatory_roles = [];
-    for($signatory = 1; $signatory <= 3; $signatory++){
-        $signatory_names[] = trim($_POST['signatory_' . $signatory . '_name'] ?? '');
-        $signatory_roles[] = trim($_POST['signatory_' . $signatory . '_role'] ?? '');
-    }
-
     if(empty($title)){
         $_SESSION['error'] = 'Election title is required.';
         safe_redirect('elections.php');
@@ -32,8 +25,8 @@ if(isset($_POST['add'])){
 
     try {
         $conn->execute_query(
-            "INSERT INTO elections (title, description, status, start_time, end_time, signatory_1_name, signatory_1_role, signatory_2_name, signatory_2_role, signatory_3_name, signatory_3_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [$title, $description, $status, $start_time, $end_time, $signatory_names[0], $signatory_roles[0], $signatory_names[1], $signatory_roles[1], $signatory_names[2], $signatory_roles[2]]
+            "INSERT INTO elections (title, description, status, start_time, end_time) VALUES (?, ?, ?, ?, ?)",
+            [$title, $description, $status, $start_time, $end_time]
         );
         $new_id = $conn->insert_id;
         log_audit($conn, 'admin', $user['id'], 'ELECTION_CREATE', "Created election #$new_id: '$title' (status: $status)");

@@ -46,18 +46,6 @@
                       <small class="text-muted">Optional: Leave blank for manual closing.</small>
                     </div>
                 </div>
-                <div class="form-group">
-                  <label class="col-sm-3 control-label">Report Signatories</label>
-                  <div class="col-sm-9">
-                    <?php for($signatory = 1; $signatory <= 3; $signatory++): ?>
-                      <div class="row" style="margin-bottom: 8px;">
-                        <div class="col-xs-6"><input type="text" class="form-control" name="signatory_<?php echo $signatory; ?>_name" placeholder="Signatory <?php echo $signatory; ?> name"></div>
-                        <div class="col-xs-6"><input type="text" class="form-control" name="signatory_<?php echo $signatory; ?>_role" placeholder="Role / title"></div>
-                      </div>
-                    <?php endfor; ?>
-                    <small class="text-muted">Printed on this election’s certified results.</small>
-                  </div>
-                </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default btn-flat pull-left" data-dismiss="modal"><i class="fa fa-close"></i> Cancel</button>
@@ -115,18 +103,6 @@
                     <div class="col-sm-9">
                       <input type="datetime-local" class="form-control" id="edit_end_time" name="end_time">
                     </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-sm-3 control-label">Report Signatories</label>
-                  <div class="col-sm-9">
-                    <?php for($signatory = 1; $signatory <= 3; $signatory++): ?>
-                      <div class="row" style="margin-bottom: 8px;">
-                        <div class="col-xs-6"><input type="text" class="form-control" id="edit_signatory_<?php echo $signatory; ?>_name" name="signatory_<?php echo $signatory; ?>_name" placeholder="Signatory <?php echo $signatory; ?> name"></div>
-                        <div class="col-xs-6"><input type="text" class="form-control" id="edit_signatory_<?php echo $signatory; ?>_role" name="signatory_<?php echo $signatory; ?>_role" placeholder="Role / title"></div>
-                      </div>
-                    <?php endfor; ?>
-                    <small class="text-muted">Printed on this election’s certified results.</small>
-                  </div>
                 </div>
             </div>
             <div class="modal-footer">

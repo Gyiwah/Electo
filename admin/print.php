@@ -15,15 +15,18 @@ $current_election = $elec_q->fetch_assoc() ?: [
 $election_title = $current_election['title'];
 $election_status = strtoupper($current_election['status']);
 
-// Turnout metrics
-$total_voters = (int)$conn->query("SELECT COUNT(*) as c FROM voters")->fetch_assoc()['c'];
+// Turnout metrics (based on eligible voters assigned to this election)
+$total_voters = get_election_eligible_voters_count($conn, $election_id);
 $ballots_stmt = $conn->execute_query(
     "SELECT COUNT(DISTINCT voter_id) as c FROM voter_ballot_audit WHERE election_id = ?",
     [$election_id]
 );
 $ballots_cast = (int)$ballots_stmt->fetch_assoc()['c'];
 if ($ballots_cast === 0) {
-    $ballots_cast = (int)$conn->query("SELECT COUNT(DISTINCT voters_id) as c FROM votes WHERE voters_id > 0")->fetch_assoc()['c'];
+    $ballots_cast = (int)$conn->execute_query(
+        "SELECT COUNT(DISTINCT voters_id) as c FROM votes WHERE voters_id > 0 AND election_id = ?",
+        [$election_id]
+    )->fetch_assoc()['c'];
 }
 
 $turnout_pct = ($total_voters > 0) ? round(($ballots_cast / $total_voters) * 100, 1) : 0;
@@ -415,7 +418,7 @@ $audit_hash = strtoupper(substr(hash('sha256', $election_id . $election_title . 
             </div>
             <div class="meta-item">
                 <span class="meta-label">Voter Turnout:</span>
-                <span class="meta-value"><?php echo $turnout_pct; ?>% (<?php echo $ballots_cast; ?> of <?php echo $total_voters; ?> Registered)</span>
+                <span class="meta-value"><?php echo $turnout_pct; ?>% (<?php echo $ballots_cast; ?> of <?php echo $total_voters; ?> Eligible Voters)</span>
             </div>
             <div class="meta-item">
                 <span class="meta-label">Audit Verification Hash:</span>

@@ -13,13 +13,6 @@ if(isset($_POST['edit'])){
     $status = $_POST['status'] ?? 'draft';
     $start_time = !empty($_POST['start_time']) ? date('Y-m-d H:i:s', strtotime($_POST['start_time'])) : null;
     $end_time = !empty($_POST['end_time']) ? date('Y-m-d H:i:s', strtotime($_POST['end_time'])) : null;
-    $signatory_names = [];
-    $signatory_roles = [];
-    for($signatory = 1; $signatory <= 3; $signatory++){
-        $signatory_names[] = trim($_POST['signatory_' . $signatory . '_name'] ?? '');
-        $signatory_roles[] = trim($_POST['signatory_' . $signatory . '_role'] ?? '');
-    }
-
     if($id <= 0 || empty($title)){
         $_SESSION['error'] = 'Invalid election information provided.';
         safe_redirect('elections.php');
@@ -33,8 +26,8 @@ if(isset($_POST['edit'])){
 
     try {
         $conn->execute_query(
-            "UPDATE elections SET title = ?, description = ?, status = ?, start_time = ?, end_time = ?, signatory_1_name = ?, signatory_1_role = ?, signatory_2_name = ?, signatory_2_role = ?, signatory_3_name = ?, signatory_3_role = ? WHERE id = ?",
-            [$title, $description, $status, $start_time, $end_time, $signatory_names[0], $signatory_roles[0], $signatory_names[1], $signatory_roles[1], $signatory_names[2], $signatory_roles[2], $id]
+            "UPDATE elections SET title = ?, description = ?, status = ?, start_time = ?, end_time = ? WHERE id = ?",
+            [$title, $description, $status, $start_time, $end_time, $id]
         );
         log_audit($conn, 'admin', $user['id'], 'ELECTION_UPDATE', "Updated election #$id: '$title' (status: $status)");
         $_SESSION['success'] = 'Election configuration updated successfully!';

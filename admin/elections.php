@@ -62,7 +62,7 @@
                     <th>Election Title</th>
                     <th>Status</th>
                     <th>Voting Schedule</th>
-                    <th>Ballots Cast</th>
+                    <th>Turnout &amp; Ballots</th>
                     <th>Total Selections</th>
                     <th>Quick Status</th>
                     <th>Actions</th>
@@ -71,12 +71,16 @@
                     <?php
                       $sql = "SELECT e.*, 
                                 (SELECT COUNT(DISTINCT voter_id) FROM voter_ballot_audit WHERE election_id = e.id) as ballots_cast,
+                                (SELECT COUNT(DISTINCT voter_id) FROM voter_elections WHERE election_id = e.id) as eligible_voters,
                                 (SELECT COUNT(*) FROM votes WHERE election_id = e.id) as total_votes
                               FROM elections e 
                               ORDER BY (e.status = 'active') DESC, e.id DESC";
                       $next_schedule_refresh_at = null;
                       $query = $conn->query($sql);
                       while($row = $query->fetch_assoc()){
+                        $eligible_count = (int)$row['eligible_voters'];
+                        $ballots_count = (int)$row['ballots_cast'];
+                        $turnout_rate = ($eligible_count > 0) ? round(($ballots_count / $eligible_count) * 100, 1) : 0;
                         $schedule_state = get_election_schedule_status($row);
                         if($schedule_state['state'] === 'scheduled' && !empty($row['start_time'])){
                           $transition_at = strtotime($row['start_time']);
@@ -157,7 +161,10 @@
                             </td>
                             <td>".$status_badge."</td>
                             <td>".$schedule."</td>
-                            <td><span class='badge bg-blue'>".(int)$row['ballots_cast']." Voters</span></td>
+                            <td>
+                              <span class='badge bg-blue'>".$ballots_count." / ".$eligible_count."</span><br>
+                              <small class='text-muted'><b>".$turnout_rate."%</b> Turnout</small>
+                            </td>
                             <td><span class='badge bg-purple'>".(int)$row['total_votes']." Votes</span></td>
                             <td>".$quick_status_btn."</td>
                             <td>
@@ -217,10 +224,6 @@ function getRow(id){
       $('#edit_status').val(response.status);
       $('#edit_start_time').val(response.start_time);
       $('#edit_end_time').val(response.end_time);
-      for(var signatory = 1; signatory <= 3; signatory++){
-        $('#edit_signatory_' + signatory + '_name').val(response['signatory_' + signatory + '_name'] || '');
-        $('#edit_signatory_' + signatory + '_role').val(response['signatory_' + signatory + '_role'] || '');
-      }
     }
   });
 }
