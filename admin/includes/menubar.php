@@ -26,9 +26,7 @@
       <li class="header">SETTINGS</li>
       <li class=""><a href="ballot.php"><i class="fa fa-file-text"></i> <span>Ballot Position</span></a></li>
       <li class=""><a href="sms_settings.php"><i class="fa fa-envelope-o"></i> <span>SMS & OTP Gateway</span></a></li>
-      <li class=""><a href="#config" data-toggle="modal"><i class="fa fa-cog"></i> <span>Election Title</span></a></li>
     </ul>
   </section>
   <!-- /.sidebar -->
 </aside>
-<?php include 'config_modal.php'; ?>

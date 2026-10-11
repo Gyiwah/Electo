@@ -53,9 +53,16 @@
               <span class="text-muted" style="margin-left: 12px;">Election: <strong><?php echo escape_html($active_election['title'] ?? 'Current Election'); ?></strong></span>
             </div>
             <div class="box-body">
-              <table id="example1" class="table table-bordered">
+              <div class="bulk-selection-toolbar">
+                <label class="bulk-selection-count"><span id="selected_candidate_count">0</span> selected</label>
+                <div class="bulk-selection-actions">
+                  <button type="button" class="btn btn-danger btn-sm btn-flat" id="bulk_delete_button" disabled><i class="fa fa-trash"></i> Delete Selected</button>
+                </div>
+              </div>
+              <div class="table-responsive">
+              <table id="example1" class="table table-bordered table-striped">
                 <thead>
-                  <th class="hidden"></th>
+                  <th class="voter-select-cell"><input type="checkbox" id="select_all_candidates" aria-label="Select candidates on this page"></th>
                   <th>Position</th>
                   <th>Photo</th>
                   <th>Firstname</th>
@@ -77,10 +84,10 @@
                       $image = (!empty($row['photo'])) ? '../images/'.escape_html($row['photo']) : '../images/profile.jpg';
                       echo "
                         <tr>
-                          <td class='hidden'></td>
+                          <td class='voter-select-cell'><input type='checkbox' class='candidate-select' value='".(int)$row['canid']."' aria-label='Select candidate ".escape_html($row['firstname'].' '.$row['lastname'])."'></td>
                           <td>".escape_html($row['description'])."</td>
                           <td>
-                            <img src='".$image."' width='30px' height='30px'>
+                            <img src='".$image."' width='30px' height='30px' style='object-fit: cover; border-radius: 50%;'>
                             <a href='#edit_photo' data-toggle='modal' class='pull-right photo' data-id='".(int)$row['canid']."'><span class='fa fa-edit'></span></a>
                           </td>
                           <td>".escape_html($row['firstname'])."</td>
@@ -96,6 +103,7 @@
                   ?>
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         </div>
@@ -105,10 +113,98 @@
     
   <?php include 'includes/footer.php'; ?>
   <?php include 'includes/candidates_modal.php'; ?>
+  <div class="modal fade" id="bulk_delete_modal" tabindex="-1" role="dialog" aria-labelledby="bulk_delete_title">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form method="POST" action="candidates_bulk_action.php" id="bulk_delete_form">
+          <?php echo csrf_field(); ?>
+          <input type="hidden" name="action" value="delete">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="bulk_delete_title">Delete selected candidates?</h4>
+          </div>
+          <div class="modal-body">
+            <p id="bulk_delete_summary" style="font-weight: 600;"></p>
+            <p class="text-danger">This will permanently delete the selected candidates and their photos. This action cannot be undone.</p>
+            <div class="bulk-hidden-candidates"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default btn-flat" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger btn-flat" name="bulk_action"><i class="fa fa-trash"></i> Delete Candidates</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 <?php include 'includes/scripts.php'; ?>
 <script>
 $(function(){
+  var selectedCandidates = {};
+  var candidateTable = $('#example1').DataTable({
+    "columnDefs": [
+      { "orderable": false, "targets": [0, 2, 6] }
+    ]
+  });
+
+  function selectedCandidateIds(){
+    return Object.keys(selectedCandidates).filter(function(id){ return selectedCandidates[id]; });
+  }
+
+  function refreshCandidateSelection(){
+    var selectedIds = selectedCandidateIds();
+    $('#selected_candidate_count').text(selectedIds.length);
+    $('#bulk_delete_button').prop('disabled', selectedIds.length === 0);
+    var visibleChecks = candidateTable.rows({page: 'current'}).nodes().to$().find('.candidate-select');
+    var selectedVisible = visibleChecks.filter(':checked').length;
+    $('#select_all_candidates').prop('checked', visibleChecks.length > 0 && selectedVisible === visibleChecks.length);
+    $('#select_all_candidates').prop('indeterminate', selectedVisible > 0 && selectedVisible < visibleChecks.length);
+  }
+
+  function prepareBulkForm(formId, summaryId, countText){
+    var ids = selectedCandidateIds();
+    var form = $(formId);
+    form.find('.bulk-hidden-candidates').empty();
+    ids.forEach(function(id){
+      $('<input>', {type: 'hidden', name: 'candidate_ids[]', value: id}).appendTo(form.find('.bulk-hidden-candidates'));
+    });
+    $(summaryId).text(countText.replace('{count}', ids.length));
+  }
+
+  $('#example1').on('change', '.candidate-select', function(){
+    var id = String(this.value);
+    if(this.checked){ selectedCandidates[id] = true; }
+    else { delete selectedCandidates[id]; }
+    refreshCandidateSelection();
+  });
+
+  $('#select_all_candidates').on('change', function(){
+    var checked = this.checked;
+    candidateTable.rows({page: 'current'}).nodes().to$().find('.candidate-select').each(function(){
+      var id = String(this.value);
+      this.checked = checked;
+      if(checked){ selectedCandidates[id] = true; }
+      else { delete selectedCandidates[id]; }
+    });
+    refreshCandidateSelection();
+  });
+
+  $('#select_all_candidates').on('click', function(e){
+    e.stopPropagation();
+  });
+
+  candidateTable.on('draw', function(){
+    candidateTable.rows({page: 'current'}).nodes().to$().find('.candidate-select').each(function(){
+      this.checked = !!selectedCandidates[String(this.value)];
+    });
+    refreshCandidateSelection();
+  });
+
+  $('#bulk_delete_button').on('click', function(){
+    prepareBulkForm('#bulk_delete_form', '#bulk_delete_summary', 'You are about to permanently delete {count} selected candidate(s).');
+    $('#bulk_delete_modal').modal('show');
+  });
+
   $(document).on('click', '.edit', function(e){
     e.preventDefault();
     $('#edit').modal('show');

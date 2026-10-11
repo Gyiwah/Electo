@@ -16,8 +16,8 @@ $election = $elec_stmt->fetch_assoc() ?: [
     'status' => 'active'
 ];
 
-// Total voters
-$total_voters = (int)$conn->query("SELECT COUNT(*) as c FROM voters")->fetch_assoc()['c'];
+// Total eligible voters for this election
+$total_voters = get_election_eligible_voters_count($conn, $election_id);
 
 // Ballots cast in this election
 $ballots_stmt = $conn->execute_query(
@@ -27,7 +27,10 @@ $ballots_stmt = $conn->execute_query(
 $ballots_cast = (int)$ballots_stmt->fetch_assoc()['c'];
 if ($ballots_cast === 0) {
     // Legacy fallback check
-    $ballots_cast = (int)$conn->query("SELECT COUNT(DISTINCT voters_id) as c FROM votes WHERE voters_id > 0")->fetch_assoc()['c'];
+    $ballots_cast = (int)$conn->execute_query(
+        "SELECT COUNT(DISTINCT voters_id) as c FROM votes WHERE voters_id > 0 AND election_id = ?",
+        [$election_id]
+    )->fetch_assoc()['c'];
 }
 
 $turnout_pct = ($total_voters > 0) ? round(($ballots_cast / $total_voters) * 100, 1) : 0;

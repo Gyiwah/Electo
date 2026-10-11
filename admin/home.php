@@ -65,14 +65,7 @@
         $voters_voted = (int)$turnout_q->fetch_assoc()['cnt'];
 
         // Eligible voters for the selected election
-        $elig_q = $conn->execute_query(
-          "SELECT COUNT(DISTINCT v.id) as cnt 
-           FROM voters v 
-           INNER JOIN voter_elections ve ON ve.voter_id = v.id 
-           WHERE ve.election_id = ?",
-          [$election_id]
-        );
-        $total_voters = (int)$elig_q->fetch_assoc()['cnt'];
+        $total_voters = get_election_eligible_voters_count($conn, $election_id);
 
         $turnout_pct = ($total_voters > 0) ? round(($voters_voted / $total_voters) * 100, 1) : 0;
 
@@ -98,7 +91,7 @@
                 <p style="margin: 0; color: #475569; font-size: 13px;">
                   <span><i class="fa fa-clock-o text-muted"></i> <?php echo escape_html($schedule['message']); ?></span>
                   &nbsp;&bull;&nbsp; 
-                  <span>Turnout: <b style="color: #0f172a;"><?php echo $turnout_pct; ?>%</b> (<?php echo $voters_voted; ?> of <?php echo $total_voters; ?> voters)</span>
+                  <span>Turnout: <b style="color: #0f172a;"><?php echo $turnout_pct; ?>%</b> (<?php echo $voters_voted; ?> of <?php echo $total_voters; ?> eligible voters)</span>
                 </p>
               </div>
 

@@ -46,6 +46,10 @@
                 <div class="form-group">
                     <label class="col-sm-3 control-label">Eligible Election(s)</label>
                     <div class="col-sm-9">
+                      <div style="margin-bottom: 8px;">
+                        <button type="button" class="btn btn-default btn-xs" id="add_select_all_elecs"><i class="fa fa-check-square-o"></i> Select All</button>
+                        <button type="button" class="btn btn-default btn-xs" id="add_unassign_all_elecs" style="margin-left: 5px;"><i class="fa fa-square-o"></i> Unassign All</button>
+                      </div>
                       <?php foreach($modal_elecs as $me): ?>
                         <div class="checkbox" style="padding-top: 0;">
                           <label>
@@ -86,6 +90,7 @@
             <form class="form-horizontal" method="POST" action="voters_edit.php">
               <?php echo csrf_field(); ?>
               <input type="hidden" class="id" name="id">
+              <input type="hidden" name="elections_submitted" value="1">
               <div class="modal-body">
                 <div class="form-group">
                     <label for="edit_voters_id" class="col-sm-3 control-label">Voter's ID</label>
@@ -117,6 +122,10 @@
                 <div class="form-group">
                     <label class="col-sm-3 control-label">Eligible Election(s)</label>
                     <div class="col-sm-9" id="edit_elections_container">
+                      <div style="margin-bottom: 8px;">
+                        <button type="button" class="btn btn-default btn-xs" id="edit_select_all_elecs"><i class="fa fa-check-square-o"></i> Select All</button>
+                        <button type="button" class="btn btn-default btn-xs" id="edit_unassign_all_elecs" style="margin-left: 5px;"><i class="fa fa-square-o"></i> Unassign All</button>
+                      </div>
                       <?php foreach($modal_elecs as $me): ?>
                         <div class="checkbox" style="padding-top: 0;">
                           <label>

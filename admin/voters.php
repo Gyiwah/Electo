@@ -92,7 +92,8 @@
               <div class="bulk-selection-toolbar">
                 <label class="bulk-selection-count"><span id="selected_voter_count">0</span> selected</label>
                 <div class="bulk-selection-actions">
-                  <button type="button" class="btn btn-primary btn-sm btn-flat" id="bulk_assign_button" disabled><i class="fa fa-calendar-check-o"></i> Set Elections</button>
+                  <button type="button" class="btn btn-primary btn-sm btn-flat" id="bulk_assign_button" disabled><i class="fa fa-calendar-plus-o"></i> Assign Elections</button>
+                  <button type="button" class="btn btn-warning btn-sm btn-flat" id="bulk_unassign_button" disabled><i class="fa fa-calendar-times-o"></i> Unassign Elections</button>
                   <button type="button" class="btn btn-danger btn-sm btn-flat" id="bulk_delete_button" disabled><i class="fa fa-trash"></i> Delete Selected</button>
                 </div>
               </div>
@@ -201,21 +202,86 @@
           <input type="hidden" name="return_election_id" value="<?php echo (int)$filter_election; ?>">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="bulk_assign_title">Set elections for selected voters</h4>
+            <h4 class="modal-title" id="bulk_assign_title"><i class="fa fa-calendar-plus-o text-primary"></i> Assign Elections to Selected Voters</h4>
           </div>
           <div class="modal-body">
-            <p id="bulk_assign_summary"></p>
-            <p class="text-muted">Selected elections will replace each voter’s current election assignments.</p>
-            <?php foreach($all_elections as $el): ?>
-              <div class="checkbox">
-                <label><input type="checkbox" name="election_ids[]" value="<?php echo (int)$el['id']; ?>"> <?php echo escape_html($el['title']); ?> <span class="text-muted">(<?php echo strtoupper(escape_html($el['status'])); ?>)</span></label>
+            <p id="bulk_assign_summary" style="font-weight: 600;"></p>
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label>Assignment Mode:</label>
+              <div class="radio" style="margin-top: 5px;">
+                <label><input type="radio" name="assign_mode" value="replace" checked> <b>Replace current assignments</b> with selected elections</label>
               </div>
-            <?php endforeach; ?>
+              <div class="radio">
+                <label><input type="radio" name="assign_mode" value="add"> <b>Add selected elections</b> to existing assignments</label>
+              </div>
+            </div>
+            <div style="margin-bottom: 8px;">
+              <label>Select Elections to Assign:</label>
+              <div class="pull-right">
+                <button type="button" class="btn btn-default btn-xs" id="bulk_assign_select_all">Select All</button>
+                <button type="button" class="btn btn-default btn-xs" id="bulk_assign_clear_all">Clear</button>
+              </div>
+            </div>
+            <div style="max-height: 220px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px; background: #fafafa;">
+              <?php foreach($all_elections as $el): ?>
+                <div class="checkbox" style="margin: 4px 0;">
+                  <label><input type="checkbox" class="bulk-assign-cb" name="election_ids[]" value="<?php echo (int)$el['id']; ?>"> <b><?php echo escape_html($el['title']); ?></b> <span class="label label-<?php echo ($el['status'] === 'active') ? 'success' : 'default'; ?>" style="font-size: 10px;"><?php echo strtoupper(escape_html($el['status'])); ?></span></label>
+                </div>
+              <?php endforeach; ?>
+            </div>
             <div class="bulk-hidden-voters"></div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default btn-flat" data-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary btn-flat" name="bulk_action"><i class="fa fa-save"></i> Apply Elections</button>
+            <button type="submit" class="btn btn-primary btn-flat" name="bulk_action"><i class="fa fa-save"></i> Apply Assignments</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="bulk_unassign_modal" tabindex="-1" role="dialog" aria-labelledby="bulk_unassign_title">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form method="POST" action="voters_bulk_action.php" id="bulk_unassign_form">
+          <?php echo csrf_field(); ?>
+          <input type="hidden" name="return_election_id" value="<?php echo (int)$filter_election; ?>">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="bulk_unassign_title"><i class="fa fa-calendar-times-o text-warning"></i> Unassign Elections from Selected Voters</h4>
+          </div>
+          <div class="modal-body">
+            <p id="bulk_unassign_summary" style="font-weight: 600;"></p>
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label>Unassignment Scope:</label>
+              <div class="radio" style="margin-top: 5px;">
+                <label><input type="radio" name="action" value="unassign_elections" checked id="unassign_scope_selected"> <b>Unassign selected election(s)</b> only</label>
+              </div>
+              <div class="radio">
+                <label><input type="radio" name="action" value="unassign_all_elections" id="unassign_scope_all"> <b class="text-danger">Unassign from ALL elections</b> (remove all election eligibility)</label>
+              </div>
+            </div>
+            <div id="unassign_election_list_container">
+              <div style="margin-bottom: 8px;">
+                <label>Select Elections to Unassign:</label>
+                <div class="pull-right">
+                  <button type="button" class="btn btn-default btn-xs" id="bulk_unassign_select_all">Select All</button>
+                  <button type="button" class="btn btn-default btn-xs" id="bulk_unassign_clear_all">Clear</button>
+                </div>
+              </div>
+              <div style="max-height: 220px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px; background: #fafafa;">
+                <?php foreach($all_elections as $el): ?>
+                  <div class="checkbox" style="margin: 4px 0;">
+                    <label><input type="checkbox" class="bulk-unassign-cb" name="election_ids[]" value="<?php echo (int)$el['id']; ?>"> <b><?php echo escape_html($el['title']); ?></b> <span class="label label-<?php echo ($el['status'] === 'active') ? 'success' : 'default'; ?>" style="font-size: 10px;"><?php echo strtoupper(escape_html($el['status'])); ?></span></label>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <div class="bulk-hidden-voters"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default btn-flat" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-warning btn-flat" name="bulk_action"><i class="fa fa-times"></i> Unassign Elections</button>
           </div>
         </form>
       </div>
@@ -259,7 +325,7 @@ $(function(){
   function refreshVoterSelection(){
     var selectedIds = selectedVoterIds();
     $('#selected_voter_count').text(selectedIds.length);
-    $('#bulk_assign_button, #bulk_delete_button').prop('disabled', selectedIds.length === 0);
+    $('#bulk_assign_button, #bulk_unassign_button, #bulk_delete_button').prop('disabled', selectedIds.length === 0);
     var visibleChecks = voterTable.rows({page: 'current'}).nodes().to$().find('.voter-select');
     var selectedVisible = visibleChecks.filter(':checked').length;
     $('#select_all_voters').prop('checked', visibleChecks.length > 0 && selectedVisible === visibleChecks.length);
@@ -306,8 +372,49 @@ $(function(){
   });
 
   $('#bulk_assign_button').on('click', function(){
-    prepareBulkForm('#bulk_assign_form', '#bulk_assign_summary', 'Set elections for {count} selected voters.');
+    prepareBulkForm('#bulk_assign_form', '#bulk_assign_summary', 'Assign elections to {count} selected voter(s).');
     $('#bulk_assign_modal').modal('show');
+  });
+
+  $('#bulk_unassign_button').on('click', function(){
+    prepareBulkForm('#bulk_unassign_form', '#bulk_unassign_summary', 'Unassign elections from {count} selected voter(s).');
+    $('#bulk_unassign_modal').modal('show');
+  });
+
+  $('#bulk_assign_select_all').on('click', function(){
+    $('.bulk-assign-cb').prop('checked', true);
+  });
+  $('#bulk_assign_clear_all').on('click', function(){
+    $('.bulk-assign-cb').prop('checked', false);
+  });
+
+  $('#bulk_unassign_select_all').on('click', function(){
+    $('.bulk-unassign-cb').prop('checked', true);
+  });
+  $('#bulk_unassign_clear_all').on('click', function(){
+    $('.bulk-unassign-cb').prop('checked', false);
+  });
+
+  $('input[name="action"][type="radio"]').on('change', function(){
+    if($('#unassign_scope_all').is(':checked')){
+      $('#unassign_election_list_container').slideUp();
+    } else {
+      $('#unassign_election_list_container').slideDown();
+    }
+  });
+
+  $(document).on('click', '#add_select_all_elecs', function(){
+    $('#addnew input[name="elections[]"]').prop('checked', true);
+  });
+  $(document).on('click', '#add_unassign_all_elecs', function(){
+    $('#addnew input[name="elections[]"]').prop('checked', false);
+  });
+
+  $(document).on('click', '#edit_select_all_elecs', function(){
+    $('#edit .edit-election-cb').prop('checked', true);
+  });
+  $(document).on('click', '#edit_unassign_all_elecs', function(){
+    $('#edit .edit-election-cb').prop('checked', false);
   });
 
   $('#bulk_delete_button').on('click', function(){

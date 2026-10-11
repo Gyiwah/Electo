@@ -33,6 +33,8 @@ try {
 			throw new Exception('Select at least one election to assign.');
 		}
 
+		$mode = $_POST['assign_mode'] ?? 'replace'; // 'replace' or 'add'
+
 		foreach($election_ids as $election_id){
 			$exists = $conn->execute_query("SELECT id FROM elections WHERE id = ? LIMIT 1", [$election_id]);
 			if($exists->num_rows === 0){
@@ -45,7 +47,9 @@ try {
 			if($exists->num_rows === 0){
 				throw new Exception('One or more selected voters no longer exist.');
 			}
-			$conn->execute_query("DELETE FROM voter_elections WHERE voter_id = ?", [$voter_id]);
+			if($mode === 'replace'){
+				$conn->execute_query("DELETE FROM voter_elections WHERE voter_id = ?", [$voter_id]);
+			}
 			foreach($election_ids as $election_id){
 				$conn->execute_query("INSERT IGNORE INTO voter_elections (voter_id, election_id) VALUES (?, ?)", [$voter_id, $election_id]);
 			}
@@ -53,7 +57,31 @@ try {
 
 		$conn->commit();
 		$_SESSION['success'] = count($voter_ids) . ' voter election assignment(s) updated.';
-		log_audit($conn, 'admin', $user['id'], 'VOTERS_BULK_ASSIGN', 'Updated election assignments for ' . count($voter_ids) . ' voters.');
+		log_audit($conn, 'admin', $user['id'], 'VOTERS_BULK_ASSIGN', 'Assigned elections for ' . count($voter_ids) . ' voters (mode: ' . $mode . ').');
+	} elseif($action === 'unassign_elections'){
+		$election_ids = $_POST['election_ids'] ?? [];
+		$election_ids = is_array($election_ids) ? array_values(array_unique(array_filter(array_map('intval', $election_ids), function($id){ return $id > 0; }))) : [];
+		if(empty($election_ids)){
+			throw new Exception('Select at least one election to unassign.');
+		}
+
+		foreach($voter_ids as $voter_id){
+			foreach($election_ids as $election_id){
+				$conn->execute_query("DELETE FROM voter_elections WHERE voter_id = ? AND election_id = ?", [$voter_id, $election_id]);
+			}
+		}
+
+		$conn->commit();
+		$_SESSION['success'] = 'Unassigned ' . count($election_ids) . ' election(s) from ' . count($voter_ids) . ' voter(s).';
+		log_audit($conn, 'admin', $user['id'], 'VOTERS_BULK_UNASSIGN', 'Unassigned ' . count($election_ids) . ' election(s) from ' . count($voter_ids) . ' voters.');
+	} elseif($action === 'unassign_all_elections'){
+		foreach($voter_ids as $voter_id){
+			$conn->execute_query("DELETE FROM voter_elections WHERE voter_id = ?", [$voter_id]);
+		}
+
+		$conn->commit();
+		$_SESSION['success'] = 'Unassigned all elections from ' . count($voter_ids) . ' voter(s).';
+		log_audit($conn, 'admin', $user['id'], 'VOTERS_BULK_UNASSIGN_ALL', 'Unassigned all elections from ' . count($voter_ids) . ' voters.');
 	} elseif($action === 'delete'){
 		$photos = [];
 		foreach($voter_ids as $voter_id){

@@ -15,9 +15,16 @@ $output = fopen('php://output', 'w');
 fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
 
 // Metadata header
+$eligible_voters_cnt = get_election_eligible_voters_count($conn, $election_id);
+$ballots_cast_cnt = (int)$conn->execute_query("SELECT COUNT(DISTINCT voter_id) as cnt FROM voter_ballot_audit WHERE election_id = ?", [$election_id])->fetch_assoc()['cnt'];
+$turnout_rate_pct = ($eligible_voters_cnt > 0) ? round(($ballots_cast_cnt / $eligible_voters_cnt) * 100, 1) : 0;
+
 fputcsv($output, ['OFFICIAL TURNOUT & BALLOT PARTICIPATION AUDIT']);
 fputcsv($output, ['Election:', $election_title]);
 fputcsv($output, ['Export Date:', date('F j, Y - g:i:s A T')]);
+fputcsv($output, ['Eligible Voters:', $eligible_voters_cnt]);
+fputcsv($output, ['Ballots Cast:', $ballots_cast_cnt]);
+fputcsv($output, ['Voter Turnout:', $turnout_rate_pct . '%']);
 fputcsv($output, []);
 
 fputcsv($output, ['#', 'Voter ID', 'First Name', 'Last Name', 'Ballot Receipt Token', 'Timestamp Cast', 'Selections Recorded']);

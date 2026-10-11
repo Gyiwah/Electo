@@ -391,4 +391,24 @@ function is_voter_eligible_for_election($conn, $voter_id, $election_id) {
     return ($check->num_rows > 0);
 }
 
+/**
+ * Retrieve the count of eligible voters registered for a specific election
+ * 
+ * @param mysqli $conn
+ * @param int $election_id
+ * @return int
+ */
+function get_election_eligible_voters_count($conn, $election_id) {
+    if (!$conn || $election_id <= 0) return 0;
+    $stmt = $conn->execute_query(
+        "SELECT COUNT(DISTINCT v.id) as cnt 
+         FROM voters v 
+         INNER JOIN voter_elections ve ON ve.voter_id = v.id 
+         WHERE ve.election_id = ?",
+        [$election_id]
+    );
+    return (int)($stmt->fetch_assoc()['cnt'] ?? 0);
+}
+
+
 

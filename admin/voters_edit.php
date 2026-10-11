@@ -34,8 +34,8 @@
 				[$voters_id, $firstname, $lastname, $phone, $password_hash, $id]
 			);
 
-			if(isset($_POST['elections'])){
-				$selected_elections = is_array($_POST['elections']) ? $_POST['elections'] : [];
+			if(isset($_POST['elections_submitted']) || isset($_POST['elections'])){
+				$selected_elections = (isset($_POST['elections']) && is_array($_POST['elections'])) ? $_POST['elections'] : [];
 				$conn->execute_query("DELETE FROM voter_elections WHERE voter_id = ?", [$id]);
 				foreach($selected_elections as $eid){
 					$eid = (int)$eid;

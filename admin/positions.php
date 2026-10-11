@@ -53,9 +53,16 @@
               <span class="text-muted" style="margin-left: 12px;">Election: <strong><?php echo escape_html($active_election['title'] ?? 'Current Election'); ?></strong></span>
             </div>
             <div class="box-body">
-              <table id="example1" class="table table-bordered">
+              <div class="bulk-selection-toolbar">
+                <label class="bulk-selection-count"><span id="selected_position_count">0</span> selected</label>
+                <div class="bulk-selection-actions">
+                  <button type="button" class="btn btn-danger btn-sm btn-flat" id="bulk_delete_button" disabled><i class="fa fa-trash"></i> Delete Selected</button>
+                </div>
+              </div>
+              <div class="table-responsive">
+              <table id="example1" class="table table-bordered table-striped">
                 <thead>
-                  <th class="hidden"></th>
+                  <th class="voter-select-cell"><input type="checkbox" id="select_all_positions" aria-label="Select positions on this page"></th>
                   <th>Description</th>
                   <th>Maximum Vote</th>
                   <th>Tools</th>
@@ -69,7 +76,7 @@
                     while($row = $query->fetch_assoc()){
                       echo "
                         <tr>
-                          <td class='hidden'></td>
+                          <td class='voter-select-cell'><input type='checkbox' class='position-select' value='".(int)$row['id']."' aria-label='Select position ".escape_html($row['description'])."'></td>
                           <td>".escape_html($row['description'])."</td>
                           <td>".(int)$row['max_vote']."</td>
                           <td>
@@ -82,6 +89,7 @@
                   ?>
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         </div>
@@ -91,10 +99,98 @@
     
   <?php include 'includes/footer.php'; ?>
   <?php include 'includes/positions_modal.php'; ?>
+  <div class="modal fade" id="bulk_delete_modal" tabindex="-1" role="dialog" aria-labelledby="bulk_delete_title">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form method="POST" action="positions_bulk_action.php" id="bulk_delete_form">
+          <?php echo csrf_field(); ?>
+          <input type="hidden" name="action" value="delete">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="bulk_delete_title">Delete selected positions?</h4>
+          </div>
+          <div class="modal-body">
+            <p id="bulk_delete_summary" style="font-weight: 600;"></p>
+            <p class="text-danger">Deleting selected positions will also delete all candidate profiles and votes associated with them. This action cannot be undone.</p>
+            <div class="bulk-hidden-positions"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default btn-flat" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger btn-flat" name="bulk_action"><i class="fa fa-trash"></i> Delete Positions</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 <?php include 'includes/scripts.php'; ?>
 <script>
 $(function(){
+  var selectedPositions = {};
+  var positionTable = $('#example1').DataTable({
+    "columnDefs": [
+      { "orderable": false, "targets": [0, 3] }
+    ]
+  });
+
+  function selectedPositionIds(){
+    return Object.keys(selectedPositions).filter(function(id){ return selectedPositions[id]; });
+  }
+
+  function refreshPositionSelection(){
+    var selectedIds = selectedPositionIds();
+    $('#selected_position_count').text(selectedIds.length);
+    $('#bulk_delete_button').prop('disabled', selectedIds.length === 0);
+    var visibleChecks = positionTable.rows({page: 'current'}).nodes().to$().find('.position-select');
+    var selectedVisible = visibleChecks.filter(':checked').length;
+    $('#select_all_positions').prop('checked', visibleChecks.length > 0 && selectedVisible === visibleChecks.length);
+    $('#select_all_positions').prop('indeterminate', selectedVisible > 0 && selectedVisible < visibleChecks.length);
+  }
+
+  function prepareBulkForm(formId, summaryId, countText){
+    var ids = selectedPositionIds();
+    var form = $(formId);
+    form.find('.bulk-hidden-positions').empty();
+    ids.forEach(function(id){
+      $('<input>', {type: 'hidden', name: 'position_ids[]', value: id}).appendTo(form.find('.bulk-hidden-positions'));
+    });
+    $(summaryId).text(countText.replace('{count}', ids.length));
+  }
+
+  $('#example1').on('change', '.position-select', function(){
+    var id = String(this.value);
+    if(this.checked){ selectedPositions[id] = true; }
+    else { delete selectedPositions[id]; }
+    refreshPositionSelection();
+  });
+
+  $('#select_all_positions').on('change', function(){
+    var checked = this.checked;
+    positionTable.rows({page: 'current'}).nodes().to$().find('.position-select').each(function(){
+      var id = String(this.value);
+      this.checked = checked;
+      if(checked){ selectedPositions[id] = true; }
+      else { delete selectedPositions[id]; }
+    });
+    refreshPositionSelection();
+  });
+
+  $('#select_all_positions').on('click', function(e){
+    e.stopPropagation();
+  });
+
+  positionTable.on('draw', function(){
+    positionTable.rows({page: 'current'}).nodes().to$().find('.position-select').each(function(){
+      this.checked = !!selectedPositions[String(this.value)];
+    });
+    refreshPositionSelection();
+  });
+
+  $('#bulk_delete_button').on('click', function(){
+    prepareBulkForm('#bulk_delete_form', '#bulk_delete_summary', 'You are about to permanently delete {count} selected position(s) and their records.');
+    $('#bulk_delete_modal').modal('show');
+  });
+
   $(document).on('click', '.edit', function(e){
     e.preventDefault();
     $('#edit').modal('show');
