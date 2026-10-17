@@ -141,14 +141,17 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_otp'])){
 }
 ?>
 <?php include 'includes/header.php'; ?>
+<link rel="stylesheet" href="dist/css/login-ui.css">
 <body class="hold-transition login-page">
-<div class="login-box" style="width: 460px; max-width: 95%;">
+<div class="auth-ambient-orb auth-ambient-orb-1"></div>
+<div class="auth-ambient-orb auth-ambient-orb-2"></div>
+<div class="login-box" style="width: 460px; max-width: 95%; position: relative; z-index: 1;">
   	<div class="login-logo" style="margin-bottom: 20px; text-align: center;">
-  		<img src="favicon/android-chrome-192x192.png" alt="Electo Logo" style="width: 64px; height: 64px; background: #ffffff; padding: 4px; border-radius: 14px; margin: 0 auto 10px auto; display: block; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
-  		<b style="font-size: 26px; color: #ffffff; letter-spacing: -0.5px;">Electo</b>
+  		<img src="favicon/android-chrome-192x192.png" alt="Electo Logo" style="width: 64px; height: 64px; background: #ffffff; padding: 4px; border-radius: 14px; margin: 0 auto 10px auto; display: block; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25);">
+  		<b style="font-size: 26px; color: #0284c7; letter-spacing: -0.5px;">Electo</b>
   	</div>
   
-  	<div class="login-box-body" style="padding: 30px 35px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+  	<div class="login-box-body" style="padding: 30px 35px; border-radius: 20px; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08); background: #ffffff; border: 1px solid #f1f5f9;">
         
         <div style="text-align: center; margin-bottom: 20px;">
             <div style="width: 60px; height: 60px; background: #eff6ff; color: #2563eb; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 12px; border: 2px solid #bfdbfe;">

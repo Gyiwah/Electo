@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_settings') {
     $sms_api_url = trim($_POST['sms_api_url'] ?? '');
     $otp_expiry_minutes = max(1, min(60, (int)($_POST['otp_expiry_minutes'] ?? 10)));
     $otp_simulation_mode = !empty($_POST['otp_simulation_mode']) ? '1' : '0';
+    $google_client_id = trim($_POST['google_client_id'] ?? '');
 
     $file = __DIR__ . '/config.ini';
     $existing = file_exists($file) ? (@parse_ini_file($file, false, INI_SCANNER_RAW) ?: []) : [];
@@ -28,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_settings') {
     $existing['sms_api_url'] = $sms_api_url;
     $existing['otp_expiry_minutes'] = $otp_expiry_minutes;
     $existing['otp_simulation_mode'] = $otp_simulation_mode;
+    $existing['google_client_id'] = $google_client_id;
 
     $content = '';
     foreach ($existing as $k => $v) {

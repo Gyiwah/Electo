@@ -410,5 +410,105 @@ function get_election_eligible_voters_count($conn, $election_id) {
     return (int)($stmt->fetch_assoc()['cnt'] ?? 0);
 }
 
+/**
+ * Retrieve Google OAuth Client Configuration from config.ini
+ * @return array
+ */
+function get_google_config() {
+    $ini_path = __DIR__ . '/../admin/config.ini';
+    $config = [
+        'google_client_id' => '',
+    ];
+    if (file_exists($ini_path)) {
+        $parsed = @parse_ini_file($ini_path, false, INI_SCANNER_RAW);
+        if (is_array($parsed) && !empty($parsed['google_client_id'])) {
+            $config['google_client_id'] = trim((string)$parsed['google_client_id']);
+        }
+    }
+    return $config;
+}
 
+/**
+ * Verify Google ID Token (JWT)
+ * Ensures the token was genuinely signed by Google for an active session.
+ * 
+ * @param string $id_token
+ * @param string $client_id Optional expected client ID
+ * @return array|false Returns decoded token payload on success, false on failure
+ */
+function verify_google_id_token($id_token, $client_id = '') {
+    if (empty($id_token)) {
+        return false;
+    }
 
+    $parts = explode('.', $id_token);
+    if (count($parts) !== 3) {
+        return false;
+    }
+
+    // Decode payload
+    $payload_b64 = strtr($parts[1], '-_', '+/');
+    $payload_b64 .= str_repeat('=', (4 - strlen($payload_b64) % 4) % 4);
+    $payload_json = base64_decode($payload_b64);
+    if (!$payload_json) {
+        return false;
+    }
+
+    $payload = json_decode($payload_json, true);
+    if (!is_array($payload)) {
+        return false;
+    }
+
+    // Verify basic standard claims
+    $valid_issuers = ['accounts.google.com', 'https://accounts.google.com'];
+    if (!isset($payload['iss']) || !in_array($payload['iss'], $valid_issuers, true)) {
+        return false;
+    }
+
+    // Check expiration (with 300 second clock-skew tolerance)
+    if (isset($payload['exp']) && ($payload['exp'] + 300) < time()) {
+        return false;
+    }
+
+    // Check that email is present and marked verified by Google
+    if (empty($payload['email'])) {
+        return false;
+    }
+    if (!isset($payload['email_verified']) || ($payload['email_verified'] !== true && $payload['email_verified'] !== 'true' && $payload['email_verified'] !== 1)) {
+        return false;
+    }
+
+    // If client ID is specified, verify audience
+    if (!empty($client_id) && isset($payload['aud']) && $payload['aud'] !== $client_id) {
+        return false;
+    }
+
+    // If cURL is available, cryptographically verify signature with Google's public tokeninfo endpoint
+    if (function_exists('curl_init')) {
+        $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($id_token));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        $resp = curl_exec($ch);
+        $curl_err = curl_errno($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if (!$curl_err) {
+            if ($http_code === 200 && $resp) {
+                $online_info = json_decode($resp, true);
+                if (is_array($online_info) && !empty($online_info['email'])) {
+                    $is_verified = !empty($online_info['email_verified']) && 
+                        ($online_info['email_verified'] === true || $online_info['email_verified'] === 'true' || $online_info['email_verified'] === 1);
+                    if ($is_verified) {
+                        return $online_info;
+                    }
+                }
+            }
+            // Google reached and rejected token or unverified email
+            return false;
+        }
+    }
+
+    return $payload;
+}

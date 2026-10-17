@@ -131,6 +131,29 @@ $sms_config = get_sms_config();
                   </div>
                 </div>
 
+                <hr style="margin: 20px 0; border-top: 1px solid #e2e8f0;">
+                
+                <div class="form-group">
+                  <div class="col-sm-offset-3 col-sm-9">
+                    <h4 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0 0 5px 0;">
+                      <i class="fa fa-google text-danger"></i> Google Workspace Single Sign-On (SSO)
+                    </h4>
+                    <p class="text-muted" style="font-size: 12px; margin-bottom: 12px;">
+                      Allows voters to select their active <code>@st.uew.edu.gh</code> Google account logged in on their device.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="google_client_id" class="col-sm-3 control-label">Google Client ID</label>
+                  <div class="col-sm-9">
+                    <input type="text" class="form-control" id="google_client_id" name="google_client_id" value="<?php echo escape_html(get_google_config()['google_client_id'] ?? ''); ?>" placeholder="e.g. 123456789-abcdefghijk.apps.googleusercontent.com">
+                    <span class="help-block" style="font-size: 12px; margin-bottom: 0;">
+                      From Google Cloud Console &rarr; APIs & Services &rarr; Credentials (Web application). Ensure Authorized JavaScript origins include your domain (e.g. <code>http://localhost</code>).
+                    </span>
+                  </div>
+                </div>
+
               </div>
               <div class="box-footer">
                 <button type="submit" class="btn btn-primary btn-flat"><i class="fa fa-save"></i> Save Settings</button>
